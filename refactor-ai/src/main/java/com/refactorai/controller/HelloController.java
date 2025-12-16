@@ -4,6 +4,7 @@ import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.body.MethodDeclaration;
 import com.refactorai.analyzer.DeepNestingDetector;
 import com.refactorai.analyzer.LongMethodDetector;
+import com.refactorai.analyzer.MagicNumberDetector;
 import com.refactorai.analyzer.UnusedImportDetector;
 import com.refactorai.model.CodeSmell;
 import com.refactorai.service.ParserService;
@@ -30,6 +31,9 @@ public class HelloController {
     @Autowired
     private UnusedImportDetector unusedImportDetector;
 
+    @Autowired
+    private MagicNumberDetector magicNumberDetector;
+
     @GetMapping("/hello")
     public String hello() {
         return "RefactorAI is running! 🚀";
@@ -51,17 +55,12 @@ public class HelloController {
         CompilationUnit cu = cuOpt.get();
         List<MethodDeclaration> methods = parserService.extractMethods(cu);
 
-        // Collect all code smells
         List<CodeSmell> allSmells = new ArrayList<>();
 
-        // Detect long methods
         allSmells.addAll(longMethodDetector.detect(methods));
-
-        // Detect deep nesting
         allSmells.addAll(deepNestingDetector.detect(methods));
-
-        // Detect unused imports
         allSmells.addAll(unusedImportDetector.detect(cu));
+        allSmells.addAll(magicNumberDetector.detect(methods));
 
         if (allSmells.isEmpty()) {
             return List.of(new CodeSmell(
