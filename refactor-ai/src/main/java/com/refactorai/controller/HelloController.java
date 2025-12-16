@@ -6,6 +6,7 @@ import com.refactorai.analyzer.DeepNestingDetector;
 import com.refactorai.analyzer.GodClassDetector;
 import com.refactorai.analyzer.LongMethodDetector;
 import com.refactorai.analyzer.MagicNumberDetector;
+import com.refactorai.analyzer.StringConcatenationInLoopDetector;
 import com.refactorai.analyzer.UnusedImportDetector;
 import com.refactorai.model.CodeSmell;
 import com.refactorai.service.ParserService;
@@ -38,6 +39,9 @@ public class HelloController {
     @Autowired
     private GodClassDetector godClassDetector;
 
+    @Autowired
+    private StringConcatenationInLoopDetector stringConcatenationInLoopDetector;
+
     @GetMapping("/hello")
     public String hello() {
         return "RefactorAI is running! 🚀";
@@ -66,6 +70,7 @@ public class HelloController {
         allSmells.addAll(unusedImportDetector.detect(cu));
         allSmells.addAll(magicNumberDetector.detect(methods));
         allSmells.addAll(godClassDetector.detect(cu));
+        allSmells.addAll(stringConcatenationInLoopDetector.detect(methods));
 
         if (allSmells.isEmpty()) {
             return List.of(new CodeSmell(
