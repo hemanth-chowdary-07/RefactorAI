@@ -3,6 +3,7 @@ package com.refactorai.controller;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.body.MethodDeclaration;
 import com.refactorai.analyzer.DeepNestingDetector;
+import com.refactorai.analyzer.EmptyCatchBlockDetector;
 import com.refactorai.analyzer.GodClassDetector;
 import com.refactorai.analyzer.LongMethodDetector;
 import com.refactorai.analyzer.MagicNumberDetector;
@@ -42,6 +43,9 @@ public class HelloController {
     @Autowired
     private StringConcatenationInLoopDetector stringConcatenationInLoopDetector;
 
+    @Autowired
+    private EmptyCatchBlockDetector emptyCatchBlockDetector;
+
     @GetMapping("/hello")
     public String hello() {
         return "RefactorAI is running! 🚀";
@@ -71,6 +75,7 @@ public class HelloController {
         allSmells.addAll(magicNumberDetector.detect(methods));
         allSmells.addAll(godClassDetector.detect(cu));
         allSmells.addAll(stringConcatenationInLoopDetector.detect(methods));
+        allSmells.addAll(emptyCatchBlockDetector.detect(methods));
 
         if (allSmells.isEmpty()) {
             return List.of(new CodeSmell(
