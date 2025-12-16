@@ -4,6 +4,7 @@ import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.body.MethodDeclaration;
 import com.refactorai.analyzer.DeepNestingDetector;
 import com.refactorai.analyzer.LongMethodDetector;
+import com.refactorai.analyzer.UnusedImportDetector;
 import com.refactorai.model.CodeSmell;
 import com.refactorai.service.ParserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,6 +26,9 @@ public class HelloController {
 
     @Autowired
     private DeepNestingDetector deepNestingDetector;
+
+    @Autowired
+    private UnusedImportDetector unusedImportDetector;
 
     @GetMapping("/hello")
     public String hello() {
@@ -55,6 +59,9 @@ public class HelloController {
 
         // Detect deep nesting
         allSmells.addAll(deepNestingDetector.detect(methods));
+
+        // Detect unused imports
+        allSmells.addAll(unusedImportDetector.detect(cu));
 
         if (allSmells.isEmpty()) {
             return List.of(new CodeSmell(
