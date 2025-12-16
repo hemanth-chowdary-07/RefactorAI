@@ -3,6 +3,7 @@ package com.refactorai.controller;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.body.MethodDeclaration;
 import com.refactorai.analyzer.DeepNestingDetector;
+import com.refactorai.analyzer.GodClassDetector;
 import com.refactorai.analyzer.LongMethodDetector;
 import com.refactorai.analyzer.MagicNumberDetector;
 import com.refactorai.analyzer.UnusedImportDetector;
@@ -34,6 +35,9 @@ public class HelloController {
     @Autowired
     private MagicNumberDetector magicNumberDetector;
 
+    @Autowired
+    private GodClassDetector godClassDetector;
+
     @GetMapping("/hello")
     public String hello() {
         return "RefactorAI is running! 🚀";
@@ -61,6 +65,7 @@ public class HelloController {
         allSmells.addAll(deepNestingDetector.detect(methods));
         allSmells.addAll(unusedImportDetector.detect(cu));
         allSmells.addAll(magicNumberDetector.detect(methods));
+        allSmells.addAll(godClassDetector.detect(cu));
 
         if (allSmells.isEmpty()) {
             return List.of(new CodeSmell(
