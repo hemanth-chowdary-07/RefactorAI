@@ -47,14 +47,18 @@ public class OpenAIService {
 
     private String buildPrompt(String code, String smellType, String description) {
         return String.format(
-                "Code Smell Detected: %s\n\n" +
-                        "Description: %s\n\n" +
+                "You are a Java code refactoring expert.\n\n" +
+                        "TASK: Refactor the following Java code to fix this issue:\n" +
+                        "Issue Type: %s\n" +
+                        "Issue Description: %s\n\n" +
                         "Original Code:\n```java\n%s\n```\n\n" +
-                        "Please provide:\n" +
-                        "1. Brief explanation of the problem\n" +
-                        "2. Refactored code that fixes it\n" +
-                        "3. Key improvements made\n\n" +
-                        "Keep response concise and focused.",
+                        "INSTRUCTIONS:\n" +
+                        "1. Return ONLY the complete refactored Java code\n" +
+                        "2. Do NOT include explanations, markdown, or comments outside the code\n" +
+                        "3. Ensure the refactored code compiles and runs correctly\n" +
+                        "4. Keep the same class name and method signatures where possible\n" +
+                        "5. Start your response with the Java code directly\n\n" +
+                        "REFACTORED CODE:",
                 smellType, description, code
         );
     }

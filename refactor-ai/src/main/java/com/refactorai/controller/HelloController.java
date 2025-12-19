@@ -4,6 +4,7 @@ import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.body.MethodDeclaration;
 import com.refactorai.analyzer.*;
 import com.refactorai.model.CodeSmell;
+import com.refactorai.service.DiffService;
 import com.refactorai.service.OpenAIService;
 import com.refactorai.service.ParserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,6 +42,9 @@ public class HelloController {
 
     @Autowired
     private OpenAIService openAIService;
+
+    @Autowired
+    private DiffService diffService;
 
     @GetMapping("/hello")
     public String hello() {
@@ -111,20 +115,30 @@ public class HelloController {
 
         if (allSmells.isEmpty()) {
             response.put("message", "No code smells detected! Code looks good.");
+            response.put("originalCode", javaCode);
             return response;
         }
 
-        // Get AI suggestion for first smell
+        // Get AI refactoring for first smell
         CodeSmell firstSmell = allSmells.get(0);
-        String aiSuggestion = openAIService.getRefactoringSuggestion(
+        String aiResponse = openAIService.getRefactoringSuggestion(
                 javaCode,
                 firstSmell.getType(),
                 firstSmell.getDescription()
         );
 
+        // Extract refactored code from AI response
+        String refactoredCode = diffService.extractJavaCode(aiResponse);
+
+        // Generate diff
+        String diff = diffService.generateDiff(javaCode, refactoredCode);
+
+        // Build response
         response.put("originalCode", javaCode);
+        response.put("refactoredCode", refactoredCode);
+        response.put("diff", diff);
         response.put("detectedSmells", allSmells);
-        response.put("aiSuggestion", aiSuggestion);
+        response.put("explanation", "AI refactored the code to fix: " + firstSmell.getType());
 
         return response;
     }
