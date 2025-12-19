@@ -3,7 +3,12 @@ package com.refactorai.controller;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.body.MethodDeclaration;
 import com.refactorai.analyzer.*;
+import com.refactorai.entity.AnalysisHistory;
+import com.refactorai.entity.User;
 import com.refactorai.model.CodeSmell;
+import com.refactorai.repository.AnalysisHistoryRepository;
+import com.refactorai.repository.UserRepository;
+import com.refactorai.security.JwtUtil;
 import com.refactorai.service.DiffService;
 import com.refactorai.service.OpenAIService;
 import com.refactorai.service.ParserService;
@@ -14,6 +19,7 @@ import java.util.*;
 
 @RestController
 @RequestMapping("/api")
+@CrossOrigin(origins = "*")
 public class HelloController {
 
     @Autowired
@@ -45,6 +51,15 @@ public class HelloController {
 
     @Autowired
     private DiffService diffService;
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private AnalysisHistoryRepository analysisHistoryRepository;
+
+    @Autowired
+    private JwtUtil jwtUtil;
 
     @GetMapping("/hello")
     public String hello() {
@@ -90,7 +105,10 @@ public class HelloController {
     }
 
     @PostMapping("/refactor")
-    public Map<String, Object> refactor(@RequestBody String javaCode) {
+    public Map<String, Object> refactor(
+            @RequestBody String javaCode,
+            @RequestHeader(value = "Authorization", required = false) String authHeader
+    ) {
         Map<String, Object> response = new HashMap<>();
 
         // First analyze the code
@@ -139,6 +157,84 @@ public class HelloController {
         response.put("diff", diff);
         response.put("detectedSmells", allSmells);
         response.put("explanation", "AI refactored the code to fix: " + firstSmell.getType());
+
+        // Save to database if user is authenticated
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            try {
+                String token = authHeader.substring(7);
+                String username = jwtUtil.extractUsername(token);
+                Optional<User> userOpt = userRepository.findByUsername(username);
+
+                if (userOpt.isPresent()) {
+                    User user = userOpt.get();
+
+                    // Create smell types string
+                    String smellTypes = allSmells.stream()
+                            .map(CodeSmell::getType)
+                            .distinct()
+                            .reduce((a, b) -> a + ", " + b)
+                            .orElse("None");
+
+                    // Save analysis
+                    AnalysisHistory history = new AnalysisHistory(
+                            user,
+                            javaCode,
+                            refactoredCode,
+                            diff,
+                            allSmells.size(),
+                            smellTypes
+                    );
+                    analysisHistoryRepository.save(history);
+
+                    response.put("saved", true);
+                }
+            } catch (Exception e) {
+                // Silently fail - analysis works even if save fails
+                System.out.println("Failed to save analysis: " + e.getMessage());
+                e.printStackTrace();
+                response.put("saved", false);
+                response.put("saveError", e.getMessage());
+            }
+        }
+
+        return response;
+    }
+
+    @GetMapping("/test-auth")
+    public Map<String, Object> testAuth(
+            @RequestHeader(value = "Authorization", required = false) String authHeader
+    ) {
+        Map<String, Object> response = new HashMap<>();
+
+        if (authHeader == null) {
+            response.put("error", "No Authorization header");
+            return response;
+        }
+
+        if (!authHeader.startsWith("Bearer ")) {
+            response.put("error", "Authorization header doesn't start with Bearer");
+            return response;
+        }
+
+        try {
+            String token = authHeader.substring(7);
+            String username = jwtUtil.extractUsername(token);
+
+            Optional<User> userOpt = userRepository.findByUsername(username);
+
+            if (userOpt.isEmpty()) {
+                response.put("error", "User not found: " + username);
+                return response;
+            }
+
+            response.put("success", true);
+            response.put("username", username);
+            response.put("userId", userOpt.get().getId());
+
+        } catch (Exception e) {
+            response.put("error", "Exception: " + e.getMessage());
+            e.printStackTrace();
+        }
 
         return response;
     }
