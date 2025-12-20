@@ -238,4 +238,39 @@ public class HelloController {
 
         return response;
     }
+
+    @GetMapping("/history")
+    public Map<String, Object> getHistory(
+            @RequestHeader(value = "Authorization", required = false) String authHeader
+    ) {
+        Map<String, Object> response = new HashMap<>();
+
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            response.put("error", "Unauthorized");
+            return response;
+        }
+
+        try {
+            String token = authHeader.substring(7);
+            String username = jwtUtil.extractUsername(token);
+            Optional<User> userOpt = userRepository.findByUsername(username);
+
+            if (userOpt.isEmpty()) {
+                response.put("error", "User not found");
+                return response;
+            }
+
+            User user = userOpt.get();
+            List<AnalysisHistory> history = analysisHistoryRepository.findTop10ByUserOrderByCreatedAtDesc(user);
+
+            response.put("success", true);
+            response.put("count", history.size());
+            response.put("history", history);
+
+        } catch (Exception e) {
+            response.put("error", e.getMessage());
+        }
+
+        return response;
+    }
 }
