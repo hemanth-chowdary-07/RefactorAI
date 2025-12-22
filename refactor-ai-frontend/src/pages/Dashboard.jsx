@@ -2,6 +2,7 @@ import { useState, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import Editor from '@monaco-editor/react';
 import api from '../services/api';
+import HistoryModal from '../components/HistoryModal';
 
 function Dashboard() {
   const { user, logout, token } = useContext(AuthContext);
@@ -21,6 +22,7 @@ function Dashboard() {
 }`);
   const [analyzing, setAnalyzing] = useState(false);
   const [results, setResults] = useState(null);
+  const [showHistory, setShowHistory] = useState(false);
 
   const handleAnalyze = async () => {
     setAnalyzing(true);
@@ -43,12 +45,20 @@ function Dashboard() {
             <h1 className="text-2xl font-bold text-gray-800">RefactorAI</h1>
             <p className="text-sm text-gray-600">Welcome, {user.username}</p>
           </div>
-          <button
-            onClick={logout}
-            className="bg-red-500 text-white px-6 py-2 rounded-lg hover:bg-red-600 transition"
-          >
-            Logout
-          </button>
+          <div className="flex gap-3">
+            <button
+              onClick={() => setShowHistory(true)}
+              className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition"
+            >
+              History
+            </button>
+            <button
+              onClick={logout}
+              className="bg-red-500 text-white px-6 py-2 rounded-lg hover:bg-red-600 transition"
+            >
+              Logout
+            </button>
+          </div>
         </div>
       </nav>
 
@@ -99,13 +109,6 @@ function Dashboard() {
               </div>
             ) : (
               <div className="space-y-4 max-h-[600px] overflow-y-auto">
-                {/* Success Message - AT TOP */}
-                {results.saved && (
-                  <div className="bg-green-50 border-l-4 border-green-500 p-3 rounded">
-                    <p className="text-green-700 font-semibold">✓ Analysis saved to history!</p>
-                  </div>
-                )}
-
                 {/* Code Smells */}
                 <div>
                   <h3 className="font-semibold text-gray-700 mb-2">
@@ -136,6 +139,23 @@ function Dashboard() {
           </div>
         </div>
       </div>
+
+      {/* History Modal */}
+      <HistoryModal
+        isOpen={showHistory}
+        onClose={() => setShowHistory(false)}
+        token={token}
+        onSelectHistory={(item) => {
+          setCode(item.originalCode);
+          setResults({
+            originalCode: item.originalCode,
+            refactoredCode: item.refactoredCode,
+            diff: item.diff,
+            detectedSmells: [],
+            saved: true
+          });
+        }}
+      />
     </div>
   );
 }
