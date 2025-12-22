@@ -1,0 +1,7 @@
+[build]
+builder = "nixpacks"
+buildCommand = "cd refactor-ai && ./mvnw clean package -DskipTests"
+
+[deploy]
+startCommand = "cd refactor-ai && java -jar target/*.jar"
+restartPolicyType = "always"
