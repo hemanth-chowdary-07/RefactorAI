@@ -1,6 +1,8 @@
 [build]
 builder = "nixpacks"
-buildCommand = "cd refactor-ai && ./mvnw clean package -DskipTests"
+
+[build.env]
+JAVA_VERSION = "17"
 
 [deploy]
 startCommand = "cd refactor-ai && java -jar target/*.jar"
