@@ -2,6 +2,7 @@ import { useState, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import Editor from '@monaco-editor/react';
 import api from '../services/api';
+import DiffViewer from '../components/DiffViewer';
 
 function Dashboard() {
   const { user, logout, token } = useContext(AuthContext);
@@ -71,7 +72,7 @@ function Dashboard() {
             
             <div className="border rounded-lg overflow-hidden">
               <Editor
-                height="600px"
+                height="500px"
                 defaultLanguage="java"
                 value={code}
                 onChange={(value) => setCode(value || '')}
@@ -87,51 +88,51 @@ function Dashboard() {
           </div>
 
           {/* Results Panel */}
-          <div className="bg-white rounded-lg shadow-lg p-6">
-            <h2 className="text-xl font-bold text-gray-800 mb-4">Analysis Results</h2>
-            
-            {!results ? (
-              <div className="flex items-center justify-center h-[600px] text-gray-400">
-                <div className="text-center">
-                  <p className="text-lg">No analysis yet</p>
-                  <p className="text-sm mt-2">Click "Analyze & Refactor" to start</p>
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-4 max-h-[600px] overflow-y-auto">
-                {/* Success Message - AT TOP */}
-                {results.saved && (
-                  <div className="bg-green-50 border-l-4 border-green-500 p-3 rounded">
-                    <p className="text-green-700 font-semibold">✓ Analysis saved to history!</p>
-                  </div>
-                )}
-
-                {/* Code Smells */}
-                <div>
-                  <h3 className="font-semibold text-gray-700 mb-2">
-                    Detected Issues ({results.detectedSmells?.length || 0})
-                  </h3>
-                  <div className="space-y-2">
-                    {results.detectedSmells?.map((smell, idx) => (
-                      <div key={idx} className="bg-red-50 border-l-4 border-red-500 p-3 rounded">
-                        <p className="font-semibold text-red-700">{smell.type}</p>
-                        <p className="text-sm text-red-600">{smell.location}</p>
-                        <p className="text-sm text-gray-600 mt-1">{smell.description}</p>
-                      </div>
-                    ))}
+          <div className="space-y-6">
+            <div className="bg-white rounded-lg shadow-lg p-6">
+              <h2 className="text-xl font-bold text-gray-800 mb-4">Analysis Results</h2>
+              
+              {!results ? (
+                <div className="flex items-center justify-center h-[500px] text-gray-400">
+                  <div className="text-center">
+                    <p className="text-lg">No analysis yet</p>
+                    <p className="text-sm mt-2">Click "Analyze & Refactor" to start</p>
                   </div>
                 </div>
-
-                {/* Refactored Code Preview */}
-                {results.refactoredCode && (
+              ) : (
+                <div className="space-y-4">
+                  {/* Code Smells */}
                   <div>
-                    <h3 className="font-semibold text-gray-700 mb-2">Refactored Code</h3>
-                    <div className="bg-gray-900 text-gray-100 p-4 rounded-lg overflow-x-auto">
-                      <pre className="text-sm">{results.refactoredCode}</pre>
+                    <h3 className="font-semibold text-gray-700 mb-2">
+                      Detected Issues ({results.detectedSmells?.length || 0})
+                    </h3>
+                    <div className="space-y-2 max-h-60 overflow-y-auto">
+                      {results.detectedSmells?.map((smell, idx) => (
+                        <div key={idx} className="bg-red-50 border-l-4 border-red-500 p-3 rounded">
+                          <p className="font-semibold text-red-700">{smell.type}</p>
+                          <p className="text-sm text-red-600">{smell.location}</p>
+                          <p className="text-sm text-gray-600 mt-1">{smell.description}</p>
+                        </div>
+                      ))}
                     </div>
                   </div>
-                )}
-              </div>
+
+                  {/* Success Message */}
+                  {results.saved && (
+                    <div className="bg-green-50 border-l-4 border-green-500 p-3 rounded">
+                      <p className="text-green-700 font-semibold">✓ Analysis saved to history!</p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Diff Viewer */}
+            {results?.refactoredCode && (
+              <DiffViewer
+                originalCode={results.originalCode}
+                refactoredCode={results.refactoredCode}
+              />
             )}
           </div>
         </div>
